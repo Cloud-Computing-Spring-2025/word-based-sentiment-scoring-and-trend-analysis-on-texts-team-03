@@ -44,6 +44,21 @@ In this task, we process a dataset containing books, extracting only relevant me
    - Outputs a clean dataset that is structured and standardized.
 
 ---
+## 📂 **Project Structure**
+```
+task1/
+│── input/
+│    └── dataset.csv
+│── src/main/java/com/example/
+│    ├── PreprocessingDriver.java
+│    ├── PreprocessingMapper.java
+│    ├── PreprocessingReducer.java
+│── target/
+│    ├── preprocessing-1.0-SNAPSHOT.jar
+│── pom.xml
+│── README.md
+```
+---
 
 ## **Expected Output Format:**
 The cleaned and processed output will be in the following format:
@@ -194,11 +209,179 @@ cat /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
 ```bash
 cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
 git add .
-git commit -m "Updated Task 1 output with dataset.csv"
+git commit -m "Task-1 Completed by Sai Nikil Teja Swarna."
 git push
 ```
 
 🚀 **Now, your MapReduce Task 1 is fully documented, including all necessary commands!** 🚀
 
 
+# Task 2: Word Frequency Analysis with Lemmatization
+
+## 📌 **Objective**
+The goal of Task 2 is to compute word frequencies by splitting each sentence into words and applying lemmatization to reduce words to their base forms. This step enhances the dataset by providing structured word frequency analysis per book and year.
+
+---
+
+## 📖 **Implementation Notes**
+- **Scope:** Implemented using Hadoop MapReduce in Java.
+- **NLP Library:** Stanford CoreNLP for lemmatization.
+- **Dataset:** Uses the cleaned dataset from Task 1 as input.
+
+---
+
+## ⚙ **Workflow Overview**
+
+### **1️⃣ Mapper**
+- **Input:** Each line from the cleaned dataset.
+- **Steps:**
+  - Split each sentence into individual words.
+  - Apply lemmatization using Stanford CoreNLP.
+  - Emit key-value pairs where the key is a tuple `(bookID, lemma, year)` and the value is `1`.
+
+### **2️⃣ Reducer**
+- **Input:** Aggregates key-value pairs from the Mapper.
+- **Steps:**
+  - Sum the counts for each lemma.
+  - Output a dataset listing each lemma with its frequency along with the associated book ID and year.
+
+---
+
+## 📂 **Project Structure**
+```
+task2/
+│── input/
+│    └── cleaned_dataset.csv
+│── lib/
+│    └── stanford-corenlp-4.5.0-models-english.jar
+│── output/
+│    └── task2_output/
+│── src/main/java/com/example/
+│    ├── WordFrequencyDriver.java
+│    ├── WordFrequencyMapper.java
+│    ├── WordFrequencyReducer.java
+│── target/
+│    ├── wordfrequency-1.0-SNAPSHOT.jar
+│── pom.xml
+│── README.md
+```
+---
+
+## 🛠 **Setup & Execution Commands**
+
+### **1 Start Hadoop Cluster**
+```bash
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
+docker compose up -d
+```
+✅ **Starts all Hadoop services inside Docker.**
+
+---
+
+### **2 Build & Package the Code**
+```bash
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task2
+mvn clean package
+```
+✅ **Generates `wordfrequency-1.0-SNAPSHOT.jar` inside the `target/` folder.**
+
+---
+
+### **3 Download Stanford NLP Model**
+```bash
+wget https://nlp.stanford.edu/software/stanford-corenlp-4.5.0-models-english.jar -P /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task2/lib/
+```
+✅ **Downloads Stanford NLP English model into the `lib/` folder.**
+
+---
+
+### **4 Copy JAR to Hadoop Container**
+```bash
+docker cp target/wordfrequency-1.0-SNAPSHOT.jar resourcemanager:/opt/hadoop/
+```
+✅ **Moves the JAR file inside the Hadoop container.**
+
+---
+
+### **5 Enter the Hadoop Docker Container**
+```bash
+docker exec -it resourcemanager /bin/bash
+```
+✅ **Opens a terminal session inside the Hadoop container.**
+
+---
+
+### **6 Remove Old Input & Output Data from HDFS**
+```bash
+hadoop fs -rm -r /input/dataset
+hadoop fs -rm -r /output/task2_output
+```
+✅ **Deletes old dataset and output files from Hadoop HDFS.**
+
+---
+
+### **7 Upload Cleaned Dataset to HDFS**
+```bash
+hadoop fs -mkdir -p /input/dataset
+hadoop fs -put -f /opt/hadoop/cleaned_dataset.csv /input/dataset
+```
+✅ **Ensures that the latest dataset is uploaded to HDFS.**
+
+---
+
+### **8 Run MapReduce Job**
+```bash
+hadoop jar /opt/hadoop/wordfrequency-1.0-SNAPSHOT.jar \
+com.example.WordFrequencyDriver /input/dataset /output/task2_output
+```
+✅ **Processes the dataset and computes word frequencies.**
+
+---
+
+### **9 Retrieve Output from HDFS to Local Machine**
+```bash
+hadoop fs -get /output/task2_output /opt/hadoop/
+exit
+docker cp resourcemanager:/opt/hadoop/task2_output /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task2/output/
+```
+✅ **Moves the final cleaned output to your local `task2/output/` directory.**
+
+---
+
+### **10 Verify Output**
+```bash
+ls -l /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task2/output/
+```
+✅ **Ensures `_SUCCESS` and `part-r-00000` exist.**
+
+---
+✅ **11 Commit & Push the Updated Output to Git**
+```bash
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
+git add .
+git commit -m "Task-2 Completed by Bhargavi Potu."
+git push
+```
+---
+## 🎯 **Expected Output Format**
+```
+<bookID>|<lemma>|<year>    <frequency>
+```
+✅ Example:
+```
+9780002005883|novel|2004    12
+9780002005883|reader|2004    8
+9780002261982|detective|2000    15
+```
+
+---
+
+## ✅ **Final Verification**
+After completing all steps, check that:
+- The **output is correctly structured**.
+- The **code runs successfully on Hadoop**.
+- The **processed data is available in `task2/output/`**.
+- The **GitHub repository is updated with the required files**.
+
+🚀 **Task 2 is now successfully completed!** 🚀
 
