@@ -564,3 +564,102 @@ After completing all steps, check that:
 ---
 
 🚀 **Task 3 Sentiment Scoring is now successfully completed!** 🚀
+
+**Task 4: Trend Analysis & Aggregation**
+
+📌 Objective
+The goal of Task 4 is to analyze sentiment scores over time by aggregating them into broader time intervals (decades) to observe long-term trends and correlations with historical events.
+
+📖 Implementation Notes
+Scope: Implemented using Hadoop MapReduce in Java.
+
+Input: The sentiment score output from Task 3.
+
+Output: Aggregated sentiment scores by (BookID | Decade).
+
+Time Binning: Maps each year to its decade (e.g., 2004 → 2000s).
+
+⚙ Workflow Overview
+1️⃣ Mapper
+Input: Sentiment score lines in the format:
+<bookID>|<year> <sentimentScore>
+
+Steps:
+
+Parse bookID, year, and sentimentScore.
+
+Calculate the decade as (year / 10) * 10.
+
+Emit key-value pair:
+Key = <bookID> | <decade>,
+Value = <sentimentScore>.
+
+2️⃣ Reducer
+Input: Aggregated scores for (bookID | decade).
+
+Steps:
+
+Sum all sentiment scores for each (bookID | decade).
+
+Output the aggregated result.
+
+**📂 Project Structure**
+
+task4/
+│── input/
+│    └── task4_input.txt
+│── output/
+│    └── task4_output/
+│── src/main/java/com/example/
+│    ├── TrendAnalysisDriver.java
+│    ├── TrendAnalysisMapper.java
+│    ├── TrendAnalysisReducer.java
+│── target/
+│    ├── TrendAnalysisMapReduce-1.0.0.jar
+│── pom.xml
+│── README.md
+🛠 Setup & Execution Commands
+**1️⃣ Start Hadoop Cluster**
+
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
+docker compose up -d
+✅ Starts all Hadoop services.
+
+**2️⃣ Build & Package the Code**
+
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task4
+mvn clean package
+✅ Generates TrendAnalysisMapReduce-1.0.0.jar.
+
+**3️⃣ Copy JAR to Hadoop Container**
+
+docker cp target/TrendAnalysisMapReduce-1.0.0.jar resourcemanager:/opt/hadoop/
+✅ Moves the JAR into Hadoop.
+
+**4️⃣ Upload Task 3 Output to HDFS**
+
+docker exec -it resourcemanager /bin/bash
+hadoop fs -mkdir -p /input/task4_input
+hadoop fs -put -f /opt/hadoop/task4_input.txt /input/task4_input
+**5️⃣ Run MapReduce Job**
+
+hadoop jar /opt/hadoop/TrendAnalysisMapReduce-1.0.0.jar \
+com.example.TrendAnalysisDriver /input/task4_input /output/task4_output
+✅ Executes the job and performs trend analysis.
+
+**6️⃣ Retrieve Output from HDFS**
+
+hadoop fs -get /output/task4_output /opt/hadoop/
+exit
+docker cp resourcemanager:/opt/hadoop/task4_output /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task4/output/
+✅ Pulls the result to your local output folder.
+
+**7️⃣ Verify Output**
+ls -l /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task4/output/
+
+**Commit & Push the Updated Output to Git**
+
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
+git add .
+git commit -m "Task-4 Completed by Prakathesh ."
+git push
