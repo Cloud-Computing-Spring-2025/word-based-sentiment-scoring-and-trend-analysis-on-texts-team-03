@@ -385,3 +385,182 @@ After completing all steps, check that:
 
 🚀 **Task 2 is now successfully completed!** 🚀
 
+
+
+
+
+# Task 3: Sentiment Scoring
+
+## 📌 **Objective**
+The goal of Task 3 is to compute sentiment scores for each book by matching words (or their lemmatized forms) to sentiment values from the AFINN lexicon. This provides cumulative sentiment analysis per book and year.
+
+---
+
+## 📖 **Implementation Notes**
+- **Scope:** Implemented using Hadoop MapReduce in Java.
+- **Sentiment Lexicon:** AFINN-111.txt
+- **Dataset:** Uses the output or cleaned dataset from Task 2 as input.
+
+---
+
+## ⚙ **Workflow Overview**
+
+### **1️⃣ Mapper**
+- **Input:** Each line from the cleaned dataset.
+- **Steps:**
+  - Extract `bookID` and `year`.
+  - Tokenize the text description.
+  - Match each token with the AFINN lexicon.
+  - Emit key-value pairs where the key is `(bookID|year)` and the value is the sentiment score of the word.
+
+### **2️⃣ Reducer**
+- **Input:** Aggregates key-value pairs from the Mapper.
+- **Steps:**
+  - Sum the sentiment scores for each `(bookID|year)`.
+  - Output a dataset listing each book and year with the cumulative sentiment score.
+
+---
+
+## 📂 **Project Structure**
+```
+task3/
+│── input/
+│    └── task3-input.txt
+│── lib/
+│    └── AFINN-111.txt
+│── output/
+│    └── task3_output/
+│── src/main/java/com/example/
+│    ├── SentimentDriver.java
+│    ├── SentimentMapper.java
+│    ├── SentimentReducer.java
+│── target/
+│    ├── SentimentScoring-1.0-SNAPSHOT.jar
+│── pom.xml
+│── README.md
+```
+
+---
+
+## 🛠 **Setup & Execution Commands**
+
+### **1 Start Hadoop Cluster**
+```bash
+'cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03'
+'docker compose up -d'
+```
+✅ **Starts all Hadoop services inside Docker.**
+
+---
+
+### **2 Build & Package the Code**
+```bash
+'cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3'
+'mvn clean package'
+```
+✅ **Generates `SentimentScoring-1.0-SNAPSHOT.jar` inside the `target/` folder.**
+
+---
+
+### ✅ **Note- Download AFINN Sentiment Lexicon**
+```bash
+'wget https://raw.githubusercontent.com/fnielsen/afinn/master/afinn/data/AFINN-111.txt -P /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3/lib/'
+```
+---
+
+
+### **3 Copy JAR, Lexicon, and Input to Hadoop Container**
+```bash
+'docker cp /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3/target/SentimentScoring-1.0-SNAPSHOT.jar resourcemanager:/opt/hadoop/'
+'docker cp /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3/lib/AFINN-111.txt resourcemanager:/opt/hadoop/'
+'docker cp /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3/input/task3-input.txt resourcemanager:/opt/hadoop/'
+
+```
+
+---
+
+### **4 Enter the Hadoop Docker Container**
+```bash
+'docker exec -it resourcemanager /bin/bash'
+```
+✅ **Opens a terminal session inside the Hadoop container.**
+
+---
+
+### **5 Remove Old Input & Output Data from HDFS**
+```bash
+'hadoop fs -rm -r /input/task3_dataset'
+'hadoop fs -rm -r /output/task3_output'
+```
+✅ **Deletes old dataset and output files from Hadoop HDFS.**
+
+---
+
+### **6 Upload Dataset to HDFS**
+```bash
+'hadoop fs -mkdir -p /input/task3_dataset'
+'hadoop fs -put -f /opt/hadoop/task3-input.txt /input/task3_dataset'
+```
+
+---
+
+### **7 Run the MapReduce Sentiment Scoring Job**
+```bash
+'hadoop jar /opt/hadoop/SentimentScoring-1.0-SNAPSHOT.jar /input/task3_dataset /output/task3_output'
+```
+✅ **Processes the dataset and computes sentiment scores.**
+
+---
+
+### **8 Retrieve Output from HDFS to Local Machine**
+```bash
+'hadoop fs -get /output/task3_output /opt/hadoop/'
+'exit'
+'docker cp resourcemanager:/opt/hadoop/task3_output /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3/output/'
+```
+✅ **Moves the final sentiment output to your local `task3/output/` directory.**
+
+---
+
+### **9 Verify Output**
+```bash
+'ls -l /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task3/output/'
+```
+✅ **Ensures `_SUCCESS` and `part-r-00000` exist.**
+
+---
+
+### ✅ **10 Commit & Push the Updated Output to Git**
+```bash
+'cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03'
+'git add .'
+'git commit -m "Task-3 Sentiment Scoring Completed by Sruthi Bandi."'
+'git push'
+```
+
+---
+
+
+## 🎯 **Expected Output Format**
+```
+<bookID>|<year>    <cumulative_sentiment_score>
+```
+✅ Example:
+```
+9780002005883|2004    5
+9780002261982|2000    -3
+9780006178736|1993    8
+```
+
+---
+
+## ✅ **Final Verification**
+After completing all steps, check that:
+- The **output is correctly structured**.
+- The **code runs successfully on Hadoop**.
+- The **processed sentiment data is available in `task3/output/`**.
+- The **GitHub repository is updated with the required files**.
+
+---
+
+🚀 **Task 3 Sentiment Scoring is now successfully completed!** 🚀
