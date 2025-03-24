@@ -534,7 +534,7 @@ task3/
 ```bash
 'cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03'
 'git add .'
-'git commit -m "Task-3 Sentiment Scoring Completed by Sruthi Bandi."'
+'git commit -m "Task-3 Completed by Sruthi Bandi."'
 'git push'
 ```
 
