@@ -669,3 +669,162 @@ git push
 
 ---
 🎯 **Task 4 successfully implemented and documented!** 🚀
+
+# Task 5 - Hive UDF Bigram Extraction - Complete Commands
+
+## Objective
+Extract and analyze bigrams (pairs of consecutive words) using a custom Hive UDF implemented in Java. The UDF processes lemmatized text data output from Task 2.
+
+## Implementation Notes
+- **Scope:** UDF written in Java.
+- **Input:** Lemmatized text from Task 2.
+
+## Project Structure
+```
+task5/
+├── input/
+│   └── task5-input.txt
+├── output/
+│   └── task5_bigram_output/
+├── src/main/java/com/example/hiveudf/
+│   └── BigramExtractor.java
+├── target/
+│   └── hiveudf-1.0-SNAPSHOT.jar
+├── pom.xml
+└── README.md
+```
+
+## Instructions
+### Hive UDF Development
+- **Functionality:** Java UDF that accepts a block of text, tokenizes it, generates bigrams, and emits them.
+- **Return:** List of bigrams.
+
+### Hive Table and Query Process
+- **1. Table Creation:** Create a table to store the dataset.
+- **2. Data Loading:** Load the lemmatized data from Task 2.
+- **3. Querying:** Use the UDF to extract bigrams and calculate their frequencies.
+- **4. Output:** Analyze patterns and link to sentiment trends.
+
+---
+
+## 1. Build and Package UDF
+```bash
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task5
+mvn clean package
+
+ls -l /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task5/
+```
+
+## 2. Copy Files into Docker Containers
+```bash
+docker cp /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task5/target/hiveudf-1.0-SNAPSHOT.jar hive-server:/opt/
+docker cp /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task5/input/task5-input.txt namenode:/opt/
+```
+
+## 3. Load Data into HDFS
+```bash
+docker exec -it namenode /bin/bash
+hdfs dfs -mkdir -p /data/task5_input
+hdfs dfs -put -f /opt/task5-input.txt /data/task5_input/
+hdfs dfs -ls /data/task5_input/
+exit
+```
+
+## 4. Start Hive Session
+```bash
+docker exec -it hive-server /bin/bash
+hive
+```
+
+## 5. Hive SQL Commands
+```sql
+DROP TABLE IF EXISTS task5_input;
+
+CREATE TABLE task5_input (
+  book_word_year STRING,
+  frequency INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n';
+
+LOAD DATA INPATH '/data/task5_input/task5-input.txt' INTO TABLE task5_input;
+
+SELECT * FROM task5_input LIMIT 5;
+
+DROP TABLE IF EXISTS task5_input_clean;
+
+CREATE TABLE task5_input_clean AS
+SELECT 
+  split(book_word_year, '\\|')[0] AS book_id,
+  split(book_word_year, '\\|')[1] AS word,
+  split(book_word_year, '\\|')[2] AS year,
+  frequency
+FROM task5_input;
+
+SELECT * FROM task5_input_clean LIMIT 5;
+
+DROP TABLE IF EXISTS book_text;
+
+CREATE TABLE book_text AS
+SELECT
+  concat(book_id, '|', year) AS book_year,
+  concat_ws(' ', collect_list(word)) AS all_words
+FROM task5_input_clean
+GROUP BY book_id, year;
+
+SELECT * FROM book_text LIMIT 5;
+
+ADD JAR /opt/hiveudf-1.0-SNAPSHOT.jar;
+
+CREATE TEMPORARY FUNCTION bigram_extract AS 'com.example.hiveudf.BigramExtractor';
+
+DROP TABLE IF EXISTS book_bigrams;
+
+CREATE TABLE book_bigrams AS
+SELECT book_year, bigram
+FROM book_text
+LATERAL VIEW explode(bigram_extract(all_words)) bigram_table AS bigram;
+
+DROP TABLE IF EXISTS bigram_frequency;
+
+CREATE TABLE bigram_frequency AS
+SELECT book_year, bigram, COUNT(*) AS frequency
+FROM book_bigrams
+GROUP BY book_year, bigram
+ORDER BY frequency DESC;
+
+SELECT * FROM bigram_frequency LIMIT 20;
+
+INSERT OVERWRITE LOCAL DIRECTORY '/opt/task5_bigram_output'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+SELECT * FROM bigram_frequency;
+```
+
+## 6. Export and Copy Output
+```bash
+docker exec -it hive-server /bin/bash
+ls /opt/task5_bigram_output
+
+exit
+
+docker cp hive-server:/opt/task5_bigram_output /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03/task5/output/
+```
+
+## 📤 Commit & Push the Updated Output to Git
+```bash
+cd /workspaces/word-based-sentiment-scoring-and-trend-analysis-on-texts-team-03
+git add .
+git commit -m "Task-5 Completed by Sai Venkat."
+git push
+```
+✅ Pushes the latest changes to GitHub.
+
+---
+🎯 **Task 5 successfully implemented and documented!** 🚀
+
+
+
+
+
